@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>周四推理俱乐部：第四部详尽人物图谱 (中英双语版)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"></script>
+    <style>
+        :root {
+            --bg: #1e1e1e;
+            --panel: #2d2d2d;
+            --accent: #ff4757;
+            --text: #f1f2f6;
+            --core: #eccc68;
+            /* 核心组-金黄 */
+            --law: #1e90ff;
+            /* 警方-道奇蓝 */
+            --art: #70a1ff;
+            /* 艺术/古董圈-浅蓝 */
+            --crime: #ff6b81;
+            /* 罪犯/黑帮-粉红 */
+            --village: #7bed9f;
+            /* 养老院-浅绿 */
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', "Microsoft YaHei", sans-serif;
+            overflow: hidden;
+        }
+
+        #header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px 25px;
+            background: rgba(0, 0, 0, 0.8);
+            border-bottom: 2px solid var(--accent);
+            z-index: 100;
+        }
+
+        #header h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--accent);
+        }
+
+        #header p {
+            margin: 5px 0 0;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        #network-container {
+            width: 100%;
+            height: 100vh;
+            background-color: #252525;
+        }
+
+        #info-card {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 320px;
+            background: var(--panel);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            display: none;
+            z-index: 100;
+            border-top: 5px solid var(--accent);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        #info-card h2 {
+            margin: 0 0 10px;
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
+        #info-card p {
+            margin: 0;
+            line-height: 1.5;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .legend {
+            position: absolute;
+            top: 90px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            z-index: 90;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .hint {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.75rem;
+            opacity: 0.5;
+            font-style: italic;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="header">
+        <h1>《“魔鬼”的最后一眼》全人物深度图谱 (中英双语)</h1>
+        <p>包含：古董失窃案、海洛因争夺战、以及养老院的隐秘角落 (无第四部剧透)</p>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item">
+            <div class="dot" style="background: var(--core);"></div>核心四人组
+        </div>
+        <div class="legend-item">
+            <div class="dot" style="background: var(--law);"></div>警方与可靠盟友
+        </div>
+        <div class="legend-item">
+            <div class="dot" style="background: var(--art);"></div>古董商与艺术界 (关键嫌疑)
+        </div>
+        <div class="legend-item">
+            <div class="dot" style="background: var(--crime);"></div>跨国贩毒与洗钱组织
+        </div>
+        <div class="legend-item">
+            <div class="dot" style="background: var(--village);"></div>养老院住户与关联亲友
+        </div>
+    </div>
+
+    <div id="info-card">
+        <div id="card-tag" class="tag">分类</div>
+        <h2 id="card-name">角色姓名</h2>
+        <p id="card-desc">角色详细描述...</p>
+    </div>
+
+    <div class="hint">可拖动节点，点击查看详细背景</div>
+
+    <div id="network-container"></div>
+
+    <script>
+        const nodes = new vis.DataSet([
+            // 核心四人组
+            { id: 1, label: '伊丽莎白\nElizabeth Best', group: 'core', desc: '前军情六处高阶特工。面对丈夫斯蒂芬的病情，她依然努力保持理智。库尔德什的失踪触动了她的旧日伤痕。' },
+            { id: 2, label: '乔伊斯\nJoyce Meadowcroft', group: 'core', desc: '退休护士。本部的“情感支柱”，她敏锐地察觉到梅文被骗。她在这一部展现了惊人的社交渗透能力。' },
+            { id: 3, label: '易卜拉欣\nIbrahim Arif', group: 'core', desc: '精神科医生。擅长通过心理分析侧写罪犯，他在处理本案中的“毒枭”心理时起到了关键作用。' },
+            { id: 4, label: '罗恩\nRon Ritchie', group: 'core', desc: '前工会主席。行动派。他不仅要对付坏人，还要操心儿子的私生活。' },
+
+            // 警方/盟友
+            { id: 5, label: '唐娜\nDonna De Freitas', group: 'law', desc: '警官唐娜。她现在已经习惯了四人组的非法协助，但本案的暴力程度让她感到空前压力。' },
+            { id: 6, label: '克里斯\nChris Hudson', group: 'law', desc: '警司。正在热恋中，但海洛因失踪案让他面临职业生涯最大的危机。' },
+            { id: 7, label: '波格丹\nBogdan Jankowski', group: 'law', desc: '全能工头。他是伊丽莎白的利剑，也是罗恩的棋友。他复杂的过去让他能够与危险人物打交道。' },
+            { id: 8, label: '安德鲁\nAndrew', group: 'law', desc: '前特工，伊丽莎白的老同事。他在情报获取上提供了极大的帮助。' },
+
+            // 艺术与古董圈 (关键线索)
+            { id: 9, label: '库尔德什\nKuldesh Sharma', group: 'art', desc: '古董商，伊丽莎白的老友。他受人委托保管一个“盒子”，随后离奇失踪。一切混乱的起点。' },
+            { id: 10, label: '米奇·麦克斯韦\nMitch Maxwell', group: 'art', desc: '当地知名的艺术品商人。外表光鲜，实则游走在黑白两道之间。' },
+            { id: 11, label: '萨曼莎\nSamantha Maxwell', group: 'art', desc: '米奇的妻子。美丽、冷静，远比她丈夫想象的要聪明和危险。' },
+            { id: 12, label: '妮娜\nNina Feltham', group: 'art', desc: '被称为“伪造女王”。她能复制任何名画，是艺术品走私链条中的核心环节。' },
+
+            // 毒品与黑帮 (危险势力)
+            { id: 13, label: '多明尼克\nDominic Librezzo', group: 'crime', desc: '凶狠、易怒的贩毒集团成员。他一直在寻找丢失的海洛因，不惜动用暴力。' },
+            { id: 14, label: '加斯\nGarth', group: 'crime', desc: '身材魁梧、沉默寡言。他总是带着一只名叫“巴尼”的狗。他看起来是个打手，但似乎有自己的原则。' },
+            { id: 15, label: '科马克\nCormac', group: 'crime', desc: '深藏不露的幕后指使。他操控着毒品流入的渠道。' },
+            { id: 16, label: '康妮\nConnie Johnson', group: 'crime', desc: '（第一部出现）身在狱中的女毒枭。克里斯偶尔会去寻求她的“狱中咨询”。' },
+
+            // 养老院与相关
+            { id: 17, label: '斯蒂芬\nStephen Best', group: 'village', desc: '伊丽莎白的丈夫。他在这一部中的状态起伏极大，是整部书的情感泪点。' },
+            { id: 18, label: '梅文\nMervyn', group: 'village', desc: '库珀斯蔡斯的新住户。孤独的老人，深陷于“塔蒂亚娜”的网恋中无法自拔。' },
+            { id: 19, label: '塔蒂亚娜\nTatiana', group: 'village', desc: '梅文口中的“完美女友”，自称在国外。乔伊斯坚信她是一个并不存在的“杀猪盘”账号。' },
+            { id: 20, label: '杰森\nJason Ritchie', group: 'village', desc: '罗恩的儿子，前职业球员。他在本案中意外发现了一些关于父亲的新秘密。' },
+            { id: 21, label: '巴尼\nBarney', group: 'village', desc: '加斯的狗。在紧张的对峙中，这只狗成为了不同势力间奇妙的纽带。' }
+        ]);
+
+        const edges = new vis.DataSet([
+            // 核心组
+            { from: 1, to: 2 }, { from: 1, to: 3 }, { from: 1, to: 4 },
+            { from: 2, to: 3 }, { from: 2, to: 4 }, { from: 3, to: 4 },
+
+            // 情感与亲友
+            { from: 1, to: 17, label: '夫妻', color: '#7bed9f' },
+            { from: 1, to: 7, label: '绝对信任' },
+            { from: 4, to: 20, label: '父子' },
+            { from: 6, to: 5, label: '搭档' },
+
+            // 第四部案情引线
+            { from: 1, to: 9, label: '老友', color: '#ff4757', dashes: true },
+            { from: 9, to: 10, label: '生意冲突' },
+            { from: 10, to: 11, label: '夫妻' },
+            { from: 10, to: 12, label: '雇佣造假' },
+            { from: 13, to: 15, label: '上下级' },
+            { from: 13, to: 10, label: '追债/寻货' },
+            { from: 14, to: 13, label: '合作关系' },
+            { from: 14, to: 21, label: '主人' },
+
+            // 养老院故事线
+            { from: 18, to: 19, label: '网恋', dashes: true },
+            { from: 2, to: 18, label: '邻里同情' },
+            { from: 3, to: 18, label: '心理分析' },
+
+            // 跨界互动
+            { from: 7, to: 9, label: '往来' },
+            { from: 6, to: 16, label: '对手/咨询' },
+            { from: 1, to: 8, label: '前情报网' }
+        ]);
+
+        const container = document.getElementById('network-container');
+        const data = { nodes: nodes, edges: edges };
+        const options = {
+            nodes: {
+                shape: 'dot',
+                size: 26,
+                font: { size: 12, color: '#ffffff', strokeWidth: 0, multi: true },
+                borderWidth: 2,
+                shadow: true
+            },
+            edges: {
+                width: 2,
+                color: { color: '#666666', opacity: 0.4 },
+                font: { size: 10, color: '#888', align: 'middle' },
+                arrows: { to: { enabled: false } },
+                smooth: { type: 'continuous' }
+            },
+            physics: {
+                stabilization: true,
+                barnesHut: { gravitationalConstant: -2500, springLength: 180 }
+            },
+            groups: {
+                core: { color: { background: '#eccc68', border: '#ffa502' } },
+                law: { color: { background: '#1e90ff', border: '#3742fa' } },
+                art: { color: { background: '#70a1ff', border: '#1e90ff' } },
+                crime: { color: { background: '#ff6b81', border: '#ff4757' } },
+                village: { color: { background: '#7bed9f', border: '#2ed573' } }
+            }
+        };
+
+        const network = new vis.Network(container, data, options);
+
+        network.on("click", function (params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                const node = nodes.get(nodeId);
+                const card = document.getElementById('info-card');
+                const tag = document.getElementById('card-tag');
+
+                // 处理名字中的换行，让卡片标题显示更自然
+                document.getElementById('card-name').innerText = node.label.replace('\n', ' / ');
+                document.getElementById('card-desc').innerText = node.desc;
+
+                const groupMap = {
+                    core: '周四推理俱乐部核心',
+                    law: '警方/重要盟友',
+                    art: '艺术与古董圈',
+                    crime: '犯罪组织相关',
+                    village: '家属/养老院/特殊角色'
+                };
+                tag.innerText = groupMap[node.group];
+
+                const colors = { core: '#ffa502', law: '#1e90ff', art: '#70a1ff', crime: '#ff4757', village: '#2ed573' };
+                tag.style.backgroundColor = colors[node.group];
+                card.style.borderColor = colors[node.group];
+
+                card.style.display = 'block';
+            } else {
+                document.getElementById('info-card').style.display = 'none';
+            }
+        });
+    </script>
+
+</body>
+
+</html>
